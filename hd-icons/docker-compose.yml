@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  hd-icons:
+    image: xushier/hd-icons:latest
+    container_name: HD-Icons
+    ports:
+      - 50560:50560
+    networks:
+      - unet
+    environment:
+      - ALL_PROXY=${PROXY}
+    volumes:
+      - ${ICONS_DATA}:/app/icons
+    labels:
+      - net.unraid.docker.icon=${icon}
+      - net.unraid.docker.webui=${webui}
+networks:
+  unet:
+    driver: bridge
+    external: true
+    attachable: true

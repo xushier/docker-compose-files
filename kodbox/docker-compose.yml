@@ -1,0 +1,83 @@
+version: "3.8"
+services:
+  mariadb:
+    image: linuxserver/mariadb:11.4.4
+    container_name: Kodbox_DB
+    restart: unless-stopped
+    ports:
+      - 1112:3306
+    networks:
+      - unet
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=kodbox
+      - MYSQL_USER=kodbox
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - ${database}:/config:rw
+    labels:
+      - net.unraid.docker.icon=${icon}
+  redis:
+    image: redis:7.4.2
+    container_name: Kodbox_Redis
+    restart: unless-stopped
+    networks:
+      - unet
+  office:
+    image: kodcloud/kodoffice:7.4.1.1
+    container_name: Kodbox_Office
+    restart: unless-stopped
+    ports:
+      - 8001:80
+    networks:
+      - unet
+    environment:
+      - PRODUCTION_EDITION=true
+      - REDIS_ENABLED=false
+      - REDIS_SERVER_HOST=localhost
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+    labels:
+      - net.unraid.docker.icon=${icon}
+  kodbox:
+    image: kodcloud/kodbox:latest
+    container_name: Kodbox
+    restart: unless-stopped
+    ports:
+      - 3911:80
+    networks:
+      - unet
+    environment:
+      - REDIS_HOST=redis
+      - MYSQL_HOST=mariadb
+      - MYSQL_DATABASE=kodbox
+      - MYSQL_USER=kodbox
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_PORT=3306
+      - KODBOX_ADMIN_USER=${username}
+      - KODBOX_ADMIN_PASSWORD=${KODBOX_ADMIN_PASSWORD}
+      - FPM_MAX=50
+      - FPM_START=10
+      - FPM_MIN_SPARE=10
+      - FPM_MAX_SPARE=30
+    volumes:
+      - ${config}:/var/www/html:rw
+      - ${other}:/mnt:rw,shared
+    labels:
+      - net.unraid.docker.webui=${webui}
+      - net.unraid.docker.icon=${icon}
+    depends_on:
+      mariadb:
+        condition: service_started
+      redis:
+        condition: service_started
+      office:
+        condition: service_started
+networks:
+  unet:
+    driver: bridge
+    external: true
+    attachable: true

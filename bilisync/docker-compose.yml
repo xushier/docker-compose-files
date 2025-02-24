@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  bili-sync-rs:
+    image: amtoaer/bili-sync-rs:v2.4.1
+    container_name: BiliSync
+    restart: unless-stopped
+    user: 0:0
+    tty: true
+    ports:
+      - 12345:12345
+    networks:
+      - unet
+    environment:
+      - RUST_BACKTRACE=full
+    volumes:
+      - ${config}:/app/.config/bili-sync:rw
+      - ${download}:/mnt:rw
+    labels:
+      - net.unraid.docker.webui=${webui}
+      - net.unraid.docker.icon=${icon}
+    logging:
+      driver: local
+networks:
+  unet:
+    driver: bridge
+    external: true
+    attachable: true
